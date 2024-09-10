@@ -1,0 +1,168 @@
+Now you're gonna adjust api.ts and session.ts and api.ts in frontend And backend but you have to decide what this backend is needed to adjust it. I'll descripe it and you have to check it to ensure I understood it right. Feel free to ask me about anything unclear and I will be happy to help you by explain somthing or give you files or anther infromation before start adjusting files. If you write any code file you must write the entire file code.
+
+My Eplaniation:-
+
+'''
+
+When the setting get  the session starts 
+
+'''
+
+Frontend:-
+
+'''''''
+
+auth.ts:-
+
+'''
+
+const TOKEN_KEY = "token";
+
+const getToken = (): string => localStorage.getItem(TOKEN_KEY) ?? "";
+
+const clearToken = (): void => {
+  localStorage.removeItem(TOKEN_KEY);
+};
+
+const setToken = (token: string): void => {
+  localStorage.setItem(TOKEN_KEY, token);
+};
+
+export { getToken, setToken, clearToken };
+
+
+'''
+
+api.ts:-
+
+'''
+
+import { getToken } from "./auth";
+import toast from "@/utils/toast";
+
+const WAIT_FOR_AUTH_DELAY_MS = 500;
+
+export async function request(
+  url: string,
+  options: RequestInit = {},
+  disableToast: boolean = false,
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+): Promise<any> {
+  const onFail = (msg: string) => {
+    if (!disableToast) {
+      toast.error("api", msg);
+    }
+    throw new Error(msg);
+  };
+
+  const needsAuth = !url.startsWith("/api/options/");
+  const token = getToken();
+  if (!token && needsAuth) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(request(url, options, disableToast));
+      }, WAIT_FOR_AUTH_DELAY_MS);
+    });
+  }
+  if (token) {
+    // eslint-disable-next-line no-param-reassign
+    options.headers = {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
+  let response = null;
+  try {
+    response = await fetch(url, options);
+  } catch (e) {
+    onFail(`Error fetching ${url}`);
+  }
+  if (response?.status && response?.status >= 400) {
+    onFail(
+      `${response.status} error while fetching ${url}: ${response?.statusText}`,
+    );
+  }
+  if (!response?.ok) {
+    onFail(`Error fetching ${url}: ${response?.statusText}`);
+  }
+
+  try {
+    return await (response && response.json());
+  } catch (e) {
+    onFail(`Error parsing JSON from ${url}`);
+  }
+  return null;
+}
+
+
+'''
+
+session.ts:-
+
+'''
+
+'''
+
+'''''''
+
+backend:-
+
+'''''''
+
+listen.py:-
+
+'''
+
+'''
+
+auth.py:-
+
+'''
+
+import jwt
+from jwt.exceptions import InvalidTokenError
+
+from opendevin.core.logger import opendevin_logger as logger
+
+
+def get_sid_from_token(token: str, jwt_secret: str) -> str:
+    """Retrieves the session id from a JWT token.
+
+    Parameters:
+        token (str): The JWT token from which the session id is to be extracted.
+
+    Returns:
+        str: The session id if found and valid, otherwise an empty string.
+    """
+    try:
+        # Decode the JWT using the specified secret and algorithm
+        payload = jwt.decode(token, jwt_secret, algorithms=['HS256'])
+
+        # Ensure the payload contains 'sid'
+        if 'sid' in payload:
+            return payload['sid']
+        else:
+            logger.error('SID not found in token')
+            return ''
+    except InvalidTokenError:
+        logger.error('Invalid token')
+    except Exception as e:
+        logger.exception('Unexpected error decoding token: %s', e)
+    return ''
+
+
+def sign_token(payload: dict[str, object], jwt_secret: str) -> str:
+    """Signs a JWT token."""
+    # payload = {
+    #     "sid": sid,
+    #     # "exp": datetime.now(timezone.utc) + timedelta(minutes=15),
+    # }
+    return jwt.encode(payload, jwt_secret, algorithm='HS256')
+
+
+'''
+
+'''''''
+
+My backend runs on port localhost3000 you have to put this in your consideration when you adjust api.ts or session.ts because this was an open source app in the same directory but I seprate them and used nextJs instead of react. Exepctionaly you don't need to give the entire listen.py code you can give me the whole endpoints that you adjust them and the imports that I need remove or add, And any other files give me the entire files code.
