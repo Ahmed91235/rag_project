@@ -25,26 +25,12 @@ async def store_file(project_id: str, file: UploadFile = File(...), app_settings
         )
     
     try:
-        # # Generate a unique filename using uuid
-        # unique_filename = f"{uuid.uuid4()}_{file.filename}"
         
-        # # Define the directory where the file will be stored: assets/files/{project_id}/
-        # upload_dir = os.path.join("src", "assets", "files", project_id)
-        
-        # # Create the directory if it doesn't exist
-        # os.makedirs(upload_dir, exist_ok=True)
-        
-        
-        # # Save the file to the defined location
-        # with open(file_path, "wb") as buffer:
-        #     buffer.write(await file.read())
-        print("1111111111111111111")
         file_path, file_id = data_controller.generte_uniqe_filepath(project_id=project_id, orig_file_name=file.filename)
         
         async with aiofiles.open(file_path, "wb") as f:
             while chunk := await file.read(app_settings.FILE_DEFAULT_CHUNK_SIZE):
                 await f.write(chunk)
-        print("1111111111111111111")
         
         return {"filename": file_id , "message": "File stored successfully!"}
     
